@@ -21,6 +21,7 @@ The effects that this module provides include:
 
 Effect name              | Description                                                                                  | GD toolkit | [ImageMagick](https://drupal.org/project/imagemagick) toolkit<sup>1</sup> |
 -------------------------|----------------------------------------------------------------------------------------------|:----------:|:-------------------:|
+Aspect switcher          | Choose image styles to apply based on source image orientation (portrait or landscape).      | X          | X                   |
 Auto orientation         | Uses EXIF Orientation tags to determine the image orientation.                               | X          | X                   |
 Background               | Places the source image anywhere over a selected background image.                           | X          | IM only             |
 Brightness               | Supports changing brightness settings of an image. Also supports negative values (darkening).| X          | IM only             |

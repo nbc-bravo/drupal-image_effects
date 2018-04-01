@@ -98,10 +98,10 @@ class AspectSwitcherImageEffect extends ConfigurableImageEffectBase {
       '#type' => 'number',
       '#title' => t('Ratio adjustment (advanced)'),
       '#required' => TRUE,
-      '#size' => 5,
+      '#size' => 7,
       '#min' => 0,
       '#max' => 5,
-      '#step' => 0.1,
+      '#step' => 0.01,
       '#default_value' => $this->configuration['ratio_adjustment'],
       '#description' => $this->t("This allows you to bend the rules for how different the proportions need to be to trigger the switch.") . "<br/>" . $this->t("If n = (width/height)*ratio is greater than 1, use 'landscape', otherwise use 'portrait'.") . "<br/>" . $this->t("When ratio = 1 (the default) it will just switch between portrait and landscape modes."),
     ];

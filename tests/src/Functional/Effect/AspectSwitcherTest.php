@@ -88,13 +88,19 @@ class AspectSwitcherTest extends ImageEffectsTestBase {
       'data' => [
         'landscape_image_style' => 'L (landscape_image_style_test)',
         'portrait_image_style' => 'L (portrait_image_style_test)',
-        'ratio_adjustment' => 1,
+        'ratio_adjustment' => 0.99,
       ],
     ];
     $uuid = $this->addEffectToTestStyle($effect);
 
     // Load Image Style.
     $image_style = ImageStyle::load($this->testImageStyleName);
+
+    // Check that effect's configuration is as expected.
+    $aspect_switcher_effect_configuration = $image_style->getEffect($uuid)->getConfiguration()['data'];
+    $this->assertEquals('landscape_image_style_test', $aspect_switcher_effect_configuration['landscape_image_style']);
+    $this->assertEquals('portrait_image_style_test', $aspect_switcher_effect_configuration['portrait_image_style']);
+    $this->assertEquals(0.99, $aspect_switcher_effect_configuration['ratio_adjustment']);
 
     // Check that dependent image style have been added to configuration
     // dependencies.

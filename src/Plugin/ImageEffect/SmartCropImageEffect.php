@@ -8,15 +8,15 @@ use Drupal\image\ConfigurableImageEffectBase;
 use Drupal\image_effects\Component\ImageUtility;
 
 /**
- * Resize an image by percentage.
+ * Crop an image preserving the portion with the most entropy.
  *
  * @ImageEffect(
- *   id = "image_effects_resize_percentage",
- *   label = @Translation("Resize percentage"),
- *   description = @Translation("Resize the image by percentage of its width/height. If only a single dimension is specified, the other dimension will be calculated, maintaining the aspect ratio (scale).")
+ *   id = "image_effects_smart_crop",
+ *   label = @Translation("Smart Crop"),
+ *   description = @Translation("Similar to Crop, but preserves the portion of the image with the most entropy.")
  * )
  */
-class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
+class SmartCropImageEffect extends ConfigurableImageEffectBase {
 
   /**
    * {@inheritdoc}
@@ -25,6 +25,8 @@ class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
     return [
       'width' => NULL,
       'height' => NULL,
+      'simulate' => FALSE,
+      'algorithm' => 'entropy_slice',
     ];
   }
 
@@ -33,7 +35,7 @@ class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
    */
   public function getSummary() {
     return [
-      '#theme' => 'image_effects_resize_percentage_summary',
+      '#theme' => 'image_effects_smart_crop_summary',
       '#data' => $this->configuration,
     ] + parent::getSummary();
   }
@@ -61,6 +63,26 @@ class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
       '#required' => FALSE,
     ];
 
+    $form['advanced'] = [
+      '#type'  => 'details',
+      '#title' => $this->t('Advanced settings'),
+    ];
+    $form['advanced']['algorithm'] = [
+      '#type'  => 'select',
+      '#title' => $this->t('Calculation algorithm'),
+      '#options' => [
+        'entropy_slice' => $this->t('Image entropy - slicing'),
+      ],
+      '#description' => $this->t('Select an algorithm to use to determine the crop area.'),
+      '#default_value' => $this->configuration['algorithm'],
+    ];
+    $form['advanced']['simulate'] = [
+      '#type' => 'checkbox',
+      '#default_value' => $this->configuration['simulate'],
+      '#title' => t('Simulate'),
+      '#description' => t('If selected, the crop will not be executed; the crop area will be highlighted on the source image instead.'),
+    ];
+
     return $form;
   }
 
@@ -71,6 +93,8 @@ class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
     parent::submitConfigurationForm($form, $form_state);
     $this->configuration['width'] = $form_state->getValue('width');
     $this->configuration['height'] = $form_state->getValue('height');
+    $this->configuration['algorithm'] = $form_state->getValue(['advanced', 'algorithm']);
+    $this->configuration['simulate'] = $form_state->getValue(['advanced', 'simulate']);
   }
 
   /**
@@ -78,10 +102,16 @@ class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     parent::validateConfigurationForm($form, $form_state);
-    $width = (bool) $form_state->getValue('width');
-    $height = (bool) $form_state->getValue('height');
-    if ($width === FALSE && $height === FALSE) {
+    $width = $form_state->getValue('width');
+    $height = $form_state->getValue('height');
+    if (((bool) $width) === FALSE && ((bool) $height) === FALSE) {
       $form_state->setError($form, $this->t("Either <em>Width</em> or <em>Height</em> must be specified."));
+    }
+    if (strpos($width, '%') !== FALSE && ((int) str_replace('%', '', $width)) > 100) {
+      $form_state->setErrorByName('width', $this->t("A percentage crop can not be wider than the source image."));
+    }
+    if (strpos($height, '%') !== FALSE && ((int) str_replace('%', '', $height)) > 100) {
+      $form_state->setErrorByName('height', $this->t("A percentage crop can not be higher than the source image."));
     }
   }
 
@@ -89,6 +119,12 @@ class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
    * {@inheritdoc}
    */
   public function transformDimensions(array &$dimensions, $uri) {
+    if (!$dimensions['width'] || !$dimensions['height']) {
+      return;
+    }
+    if ($this->configuration['simulate']) {
+      return;
+    }
     $d = ImageUtility::resizeDimensions($dimensions['width'], $dimensions['height'], $this->configuration['width'], $this->configuration['height']);
     $dimensions['width'] = $d['width'];
     $dimensions['height'] = $d['height'];
@@ -98,9 +134,13 @@ class ResizePercentageImageEffect extends ConfigurableImageEffectBase {
    * {@inheritdoc}
    */
   public function applyEffect(ImageInterface $image) {
-    // Get resulting dimensions.
     $dimensions = ImageUtility::resizeDimensions($image->getWidth(), $image->getHeight(), $this->configuration['width'], $this->configuration['height']);
-    return $image->resize($dimensions['width'], $dimensions['height']);
+    return $image->apply('smart_crop', [
+      'width' => $dimensions['width'],
+      'height' => $dimensions['height'],
+      'algorithm' => $this->configuration['algorithm'],
+      'simulate' => $this->configuration['simulate'],
+    ]);
   }
 
 }

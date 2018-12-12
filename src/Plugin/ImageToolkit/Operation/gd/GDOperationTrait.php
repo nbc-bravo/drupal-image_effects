@@ -6,6 +6,7 @@ use Drupal\Component\Utility\Color;
 use Drupal\Component\Utility\Unicode;
 use Drupal\image_effects\Component\ColorUtility;
 use Drupal\image_effects\Component\GdGaussianBlur;
+use Drupal\image_effects\Component\GdImageAnalysis;
 use Drupal\image_effects\Component\PositionedRectangle;
 
 /**
@@ -363,6 +364,105 @@ trait GDOperationTrait {
     // Destroy temp resource and return result.
     imagedestroy($tmp);
     return $result;
+  }
+
+  /**
+   * Computes the entropy of the area of an image.
+   *
+   * @param resource $src
+   *   The source image resource.
+   * @param string $x
+   *   Starting X coordinate.
+   * @param string $y
+   *   Starting Y coordinate.
+   * @param string $width
+   *   The width of the area.
+   * @param string $height
+   *   The height of the area.
+   *
+   * @return float
+   *   The entropy of the selected area image.
+   */
+  protected function getAreaEntropy($src, $x, $y, $width, $height) {
+    $window = imagecreatetruecolor($width, $height);
+    imagecopy($window, $src, 0, 0, $x, $y, $width, $height);
+    $entropy = GdImageAnalysis::entropy($window);
+    imagedestroy($window);
+    return $entropy;
+  }
+
+  /**
+   * Computes the entropy crop of an image, using slices.
+   *
+   * @param resource $src
+   *   The source image resource.
+   * @param string $width
+   *   The width of the crop.
+   * @param string $height
+   *   The height of the crop.
+   *
+   * @return \Drupal\image_effects\Component\PositionedRectangle
+   *   The PositionedRectangle object marking the crop area.
+   */
+  protected function getEntropyCropBySlicing($src, $width, $height) {
+    $dx = imagesx($src) - min(imagesx($src), $width);
+    $dy = imagesy($src) - min(imagesy($src), $height);
+    $left = $top = 0;
+    $left_entropy = $right_entropy = $top_entropy = $bottom_entropy = 0;
+    $right = imagesx($src);
+    $bottom = imagesy($src);
+
+    // Slice from left and right edges until the correct width is reached.
+    while ($dx) {
+      $slice = min($dx, 10);
+
+      // Calculate the entropy of the new slice.
+      if (!$left_entropy) {
+        $left_entropy = $this->getAreaEntropy($src, $left, $top, $slice, imagesy($src));
+      }
+      if (!$right_entropy) {
+        $right_entropy = $this->getAreaEntropy($src, $right - $slice, $top, $slice, imagesy($src));
+      }
+
+      // Remove the lowest entropy slice.
+      if ($left_entropy >= $right_entropy) {
+        $right -= $slice;
+        $right_entropy = 0;
+      }
+      else {
+        $left += $slice;
+        $left_entropy = 0;
+      }
+      $dx -= $slice;
+    }
+
+    // Slice from the top and bottom edges until the correct width is reached.
+    while ($dy) {
+      $slice = min($dy, 10);
+
+      // Calculate the entropy of the new slice.
+      if (!$top_entropy) {
+        $top_entropy = $this->getAreaEntropy($src, $left, $top, $width, $slice);
+      }
+      if (!$bottom_entropy) {
+        $bottom_entropy = $this->getAreaEntropy($src, $left, $bottom - $slice, $width, $slice);
+      }
+
+      // Remove the lowest entropy slice.
+      if ($top_entropy >= $bottom_entropy) {
+        $bottom -= $slice;
+        $bottom_entropy = 0;
+      }
+      else {
+        $top += $slice;
+        $top_entropy = 0;
+      }
+      $dy -= $slice;
+    }
+
+    $rect = new PositionedRectangle($right - $left, $bottom - $top);
+    $rect->translate([$left, $top]);
+    return $rect;
   }
 
 }

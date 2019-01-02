@@ -316,6 +316,9 @@ image.effect.image_effects_smart_crop:
     height:
       type: string
       label: 'Height in px or %'
+    square:
+      type: boolean
+      label: 'Make width/height the same if one dimension is not specified'
     simulate:
       type: boolean
       label: 'Simulate'

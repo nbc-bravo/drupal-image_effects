@@ -46,22 +46,30 @@ class ImageUtilityTest extends TestCase {
    */
   public function resizeDimensionsProvider() {
     return [
-      [NULL, 100, 50, 25, 50, 25],
-      [200, NULL, 50, 25, 50, 25],
-      [NULL, NULL, 50, 25, 50, 25],
-      [200, 100, 50, 25, 50, 25],
-      [NULL, 100, '50%', '25%', NULL, NULL],
-      [200, NULL, '50%', '25%', NULL, NULL],
-      [NULL, NULL, '50%', '25%', NULL, NULL],
-      [200, 100, '50%', '25%', 100, 25],
-      [200, 100, '50%', '150%', 100, 150],
-      [200, 100, '150%', '10%', 300, 10],
-      [NULL, 100, '50', '25%', 50, 25],
-      [200, NULL, '50%', '25', 100, 25],
-      [200, 100, '50%', NULL, 100, 50],
-      [200, 100, NULL, '50%', 100, 50],
-      [40, 20, '100%', 0, 40, 20],
-      [40, 20, 0, '100%', 40, 20],
+      // Square = FALSE.
+      [NULL, 100, 50, 25, FALSE, 50, 25],
+      [200, NULL, 50, 25, FALSE, 50, 25],
+      [NULL, NULL, 50, 25, FALSE, 50, 25],
+      [200, 100, 50, 25, FALSE, 50, 25],
+      [NULL, 100, '50%', '25%', FALSE, NULL, NULL],
+      [200, NULL, '50%', '25%', FALSE, NULL, NULL],
+      [NULL, NULL, '50%', '25%', FALSE, NULL, NULL],
+      [200, 100, '50%', '25%', FALSE, 100, 25],
+      [200, 100, '50%', '150%', FALSE, 100, 150],
+      [200, 100, '150%', '10%', FALSE, 300, 10],
+      [NULL, 100, '50', '25%', FALSE, 50, 25],
+      [200, NULL, '50%', '25', FALSE, 100, 25],
+      [200, 100, '50%', NULL, FALSE, 100, 50],
+      [200, 100, NULL, '50%', FALSE, 100, 50],
+      [40, 20, '100%', 0, FALSE, 40, 20],
+      [40, 20, 0, '100%', FALSE, 40, 20],
+      // Square = TRUE.
+      [200, 100, 30, NULL, TRUE, 30, 30],
+      [200, 100, NULL, 35, TRUE, 35, 35],
+      [200, 100, '50%', NULL, TRUE, 100, 100],
+      [200, 100, NULL, '50%', TRUE, 50, 50],
+      [40, 20, '100%', 0, TRUE, 40, 40],
+      [40, 20, 0, '100%', TRUE, 20, 20],
     ];
   }
 
@@ -69,8 +77,8 @@ class ImageUtilityTest extends TestCase {
    * @covers ::resizeDimensions
    * @dataProvider resizeDimensionsProvider
    */
-  public function testResizeDimensions($source_width, $source_height, $width_specification, $height_specification, $expected_width, $expected_height) {
-    $result = ImageUtility::resizeDimensions($source_width, $source_height, $width_specification, $height_specification);
+  public function testResizeDimensions($source_width, $source_height, $width_specification, $height_specification, $square, $expected_width, $expected_height) {
+    $result = ImageUtility::resizeDimensions($source_width, $source_height, $width_specification, $height_specification, $square);
     $this->assertSame($expected_width, $result['width']);
     $this->assertSame($expected_height, $result['height']);
   }

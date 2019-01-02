@@ -79,6 +79,7 @@ class ScaleAndSmartCropImageEffect extends ConfigurableImageEffectBase {
       '#title' => $this->t('Calculation algorithm'),
       '#options' => [
         'entropy_slice' => $this->t('Image entropy - slicing'),
+        'entropy_grid' => $this->t('Image entropy - recursive grid'),
       ],
       '#description' => $this->t('Select an algorithm to use to determine the crop area.'),
       '#default_value' => $this->configuration['algorithm'],

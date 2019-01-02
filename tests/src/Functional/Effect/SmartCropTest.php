@@ -42,12 +42,24 @@ class SmartCropTest extends ImageEffectsTestBase {
     $derivative_uri = $this->testImageStyle->buildUri($original_uri);
 
     $test_data = [
-      '10x10' => [
+      '10x10 slice' => [
         'effect_data' => [
           'width][c0][c1][value' => 10,
           'width][c0][c1][uom' => 'px',
           'height][c0][c1][value' => 10,
           'height][c0][c1][uom' => 'px',
+          'advanced][algorithm' => 'entropy_slice',
+        ],
+        'expected_width' => 10,
+        'expected_height' => 10,
+      ],
+      '10x10 grid' => [
+        'effect_data' => [
+          'width][c0][c1][value' => 10,
+          'width][c0][c1][uom' => 'px',
+          'height][c0][c1][value' => 10,
+          'height][c0][c1][uom' => 'px',
+          'advanced][algorithm' => 'entropy_grid',
         ],
         'expected_width' => 10,
         'expected_height' => 10,

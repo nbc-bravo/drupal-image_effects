@@ -43,13 +43,16 @@ abstract class ImageUtility {
    *   The width specification. An integer value or a % specification.
    * @param string|null $height_specification
    *   The height specification. An integer value or a % specification.
+   * @param bool $square
+   *   (Optional) when TRUE and one of the specifications is NULL, will return
+   *   the same value for width and height.
    *
    * @return array
    *   Associative array.
    *   - width: Integer with the resized image width.
    *   - height: Integer with the resized image height.
    */
-  public static function resizeDimensions($source_width, $source_height, $width_specification, $height_specification) {
+  public static function resizeDimensions($source_width, $source_height, $width_specification, $height_specification, $square = FALSE) {
     $dimensions = [];
     $dimensions['width'] = static::percentFilter($width_specification, $source_width);
     $dimensions['height'] = static::percentFilter($height_specification, $source_height);
@@ -64,7 +67,12 @@ abstract class ImageUtility {
         $dimensions['height'] = NULL;
       }
       else {
-        $aspect_ratio = $source_height / $source_width;
+        if ($square) {
+          $aspect_ratio = 1;
+        }
+        else {
+          $aspect_ratio = $source_height / $source_width;
+        }
         if ($dimensions['width'] && !$dimensions['height']) {
           $dimensions['height'] = (int) round($dimensions['width'] * $aspect_ratio);
         }

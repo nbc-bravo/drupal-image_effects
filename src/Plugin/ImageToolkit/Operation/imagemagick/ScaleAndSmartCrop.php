@@ -24,7 +24,13 @@ class ScaleAndSmartCrop extends ImagemagickImageToolkitOperationBase {
    * {@inheritdoc}
    */
   protected function execute(array $arguments = []) {
-    // @todo not supported in ImageMagick. See if it could be possible.
+    // Don't scale if we don't change the dimensions at all.
+    if ($arguments['width'] !== $this->getToolkit()->getWidth() || $arguments['height'] !== $this->getToolkit()->getHeight()) {
+      // Don't upscale if the option isn't enabled.
+      if ($arguments['upscale'] || ($arguments['width'] <= $this->getToolkit()->getWidth() && $arguments['height'] <= $this->getToolkit()->getHeight())) {
+        return $this->getToolkit()->apply('resize', $arguments['resize']) && $this->getToolkit()->apply('smart_crop', $arguments);
+      }
+    }
     return TRUE;
   }
 

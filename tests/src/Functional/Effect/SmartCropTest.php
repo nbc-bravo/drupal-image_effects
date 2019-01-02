@@ -12,17 +12,6 @@ use Drupal\Tests\image_effects\Functional\ImageEffectsTestBase;
 class SmartCropTest extends ImageEffectsTestBase {
 
   /**
-   * {@inheritdoc}
-   */
-  public function providerToolkits() {
-    $toolkits = parent::providerToolkits();
-    // @todo This effect does not work with ImageMagick.
-    unset($toolkits['ImageMagick-imagemagick']);
-    unset($toolkits['ImageMagick-graphicsmagick']);
-    return $toolkits;
-  }
-
-  /**
    * Test the image_effects_smart_crop effect.
    *
    * @param string $toolkit_id

@@ -12,17 +12,6 @@ use Drupal\Tests\image_effects\Functional\ImageEffectsTestBase;
 class ScaleAndSmartCropTest extends ImageEffectsTestBase {
 
   /**
-   * {@inheritdoc}
-   */
-  public function providerToolkits() {
-    $toolkits = parent::providerToolkits();
-    // @todo This effect does not work with ImageMagick.
-    unset($toolkits['ImageMagick-imagemagick']);
-    unset($toolkits['ImageMagick-graphicsmagick']);
-    return $toolkits;
-  }
-
-  /**
    * Test the image_effects_scale_and_smart_crop effect.
    *
    * @param string $toolkit_id
@@ -151,7 +140,7 @@ class ScaleAndSmartCropTest extends ImageEffectsTestBase {
         $this->testImageStyle->createDerivative($original_uri, $derivative_uri);
         $actual_image = $this->imageFactory->get($derivative_uri, 'gd');
         $expected_image = $this->imageFactory->get($expected_image_uri, 'gd');
-        $this->assertImagesAreEqual($expected_image, $actual_image);
+        $this->assertImagesAreEqual($expected_image, $actual_image, 200);
       }
 
       // Remove effect.

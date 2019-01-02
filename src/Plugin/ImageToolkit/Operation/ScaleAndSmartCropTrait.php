@@ -16,6 +16,11 @@ trait ScaleAndSmartCropTrait {
         'description' => 'The calculation algorithm for the crop',
         'required' => TRUE,
       ],
+      'algorithm_params' => [
+        'description' => 'The calculation algorithm parameters',
+        'required' => FALSE,
+        'default' => [],
+      ],
       'simulate' => [
         'description' => 'Boolean indicating the crop shall not be executed, but just the crop area highlighted on the source image',
         'required' => FALSE,

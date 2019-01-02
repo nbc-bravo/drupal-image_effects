@@ -25,6 +25,7 @@ class SmartCropImageEffect extends ConfigurableImageEffectBase {
     return [
       'width' => NULL,
       'height' => NULL,
+      'square' => FALSE,
       'simulate' => FALSE,
       'algorithm' => 'entropy_slice',
     ];
@@ -62,6 +63,18 @@ class SmartCropImageEffect extends ConfigurableImageEffectBase {
       '#maxlength' => 5,
       '#required' => FALSE,
     ];
+    $form['square'] = [
+      '#type' => 'checkbox',
+      '#default_value' => $this->configuration['square'],
+      '#title' => t('Square'),
+      '#description' => t('Forces the crop to be a square. Applies if only one crop dimension is set, and specified as % of the source image.'),
+      '#states' => [
+        'visible' => [
+          [':radio[name="data[width][c0][c1][uom]"]' => ['value' => 'perc']],
+          [':radio[name="data[height][c0][c1][uom]"]' => ['value' => 'perc']],
+        ],
+      ],
+    ];
 
     $form['advanced'] = [
       '#type'  => 'details',
@@ -72,6 +85,7 @@ class SmartCropImageEffect extends ConfigurableImageEffectBase {
       '#title' => $this->t('Calculation algorithm'),
       '#options' => [
         'entropy_slice' => $this->t('Image entropy - slicing'),
+        'entropy_grid' => $this->t('Image entropy - recursive grid'),
       ],
       '#description' => $this->t('Select an algorithm to use to determine the crop area.'),
       '#default_value' => $this->configuration['algorithm'],
@@ -84,17 +98,6 @@ class SmartCropImageEffect extends ConfigurableImageEffectBase {
     ];
 
     return $form;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    parent::submitConfigurationForm($form, $form_state);
-    $this->configuration['width'] = $form_state->getValue('width');
-    $this->configuration['height'] = $form_state->getValue('height');
-    $this->configuration['algorithm'] = $form_state->getValue(['advanced', 'algorithm']);
-    $this->configuration['simulate'] = $form_state->getValue(['advanced', 'simulate']);
   }
 
   /**
@@ -118,6 +121,25 @@ class SmartCropImageEffect extends ConfigurableImageEffectBase {
   /**
    * {@inheritdoc}
    */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+    parent::submitConfigurationForm($form, $form_state);
+    $width = $form_state->getValue('width');
+    $height = $form_state->getValue('height');
+    $this->configuration['width'] = $width;
+    $this->configuration['height'] = $height;
+    if (strpos($width, '%') !== FALSE || strpos($height, '%') !== FALSE) {
+      $this->configuration['square'] = $form_state->getValue('square');
+    }
+    else {
+      $this->configuration['square'] = FALSE;
+    }
+    $this->configuration['algorithm'] = $form_state->getValue(['advanced', 'algorithm']);
+    $this->configuration['simulate'] = $form_state->getValue(['advanced', 'simulate']);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function transformDimensions(array &$dimensions, $uri) {
     if (!$dimensions['width'] || !$dimensions['height']) {
       return;
@@ -125,19 +147,20 @@ class SmartCropImageEffect extends ConfigurableImageEffectBase {
     if ($this->configuration['simulate']) {
       return;
     }
-    $d = ImageUtility::resizeDimensions($dimensions['width'], $dimensions['height'], $this->configuration['width'], $this->configuration['height']);
-    $dimensions['width'] = $d['width'];
-    $dimensions['height'] = $d['height'];
+    $d = ImageUtility::resizeDimensions($dimensions['width'], $dimensions['height'], $this->configuration['width'], $this->configuration['height'], $this->configuration['square']);
+    // Ensure crop dimensions fit in the source image.
+    $dimensions['width'] = min($dimensions['width'], $d['width']);
+    $dimensions['height'] = min($dimensions['height'], $d['height']);
   }
 
   /**
    * {@inheritdoc}
    */
   public function applyEffect(ImageInterface $image) {
-    $dimensions = ImageUtility::resizeDimensions($image->getWidth(), $image->getHeight(), $this->configuration['width'], $this->configuration['height']);
+    $dimensions = ImageUtility::resizeDimensions($image->getWidth(), $image->getHeight(), $this->configuration['width'], $this->configuration['height'], $this->configuration['square']);
     return $image->apply('smart_crop', [
-      'width' => $dimensions['width'],
-      'height' => $dimensions['height'],
+      'width' => min($dimensions['width'], $image->getWidth()),
+      'height' => min($dimensions['height'], $image->getHeight()),
       'algorithm' => $this->configuration['algorithm'],
       'simulate' => $this->configuration['simulate'],
     ]);

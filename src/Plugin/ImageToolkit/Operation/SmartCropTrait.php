@@ -16,6 +16,11 @@ trait SmartCropTrait {
         'description' => 'The calculation algorithm for the crop',
         'required' => TRUE,
       ],
+      'algorithm_params' => [
+        'description' => 'The calculation algorithm parameters',
+        'required' => FALSE,
+        'default' => [],
+      ],
       'simulate' => [
         'description' => 'Boolean indicating the crop shall not be executed, but just the crop area highlighted on the source image',
         'required' => FALSE,
@@ -47,6 +52,24 @@ trait SmartCropTrait {
     if ($arguments['height'] <= 0) {
       throw new \InvalidArgumentException("Invalid height ('{$arguments['height']}') specified for the image '{$this->getPluginDefinition()['operation']}' operation");
     }
+
+    switch ($arguments['algorithm']) {
+      case 'entropy_grid':
+        $arguments['algorithm_params'] = array_merge([
+          'grid_width' => 100,
+          'grid_height' => 100,
+          'grid_rows' => 5,
+          'grid_cols' => 5,
+          'grid_sub_rows' => 3,
+          'grid_sub_cols' => 3,
+        ], $arguments['algorithm_params']);
+        break;
+
+      default:
+        break;
+
+    }
+
     return $arguments;
   }
 

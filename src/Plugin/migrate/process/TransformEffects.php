@@ -76,7 +76,6 @@ class TransformEffects extends ProcessPluginBase {
         ];
       }
       elseif ($value['id'] == 'canvasactions_resizepercent') {
-        $a = 'b';
         $value['data'] = [
           'width' => $value['data']['width'] . '%',
           'height' => $value['data']['height'] . '%',

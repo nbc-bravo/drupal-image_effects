@@ -224,3 +224,40 @@ function image_effects_image_style_flush(ImageStyle $style) {
     $image_style->flush();
   }
 }
+
+/**
+ * Implements hook_migration_plugins_alter().
+ */
+function image_effects_migration_plugins_alter(array &$migrations) {
+  // Add a processor for image_effects' styles.
+  if (isset($migrations['d7_image_styles'])) {
+    $process = _image_effects_make_associative($migrations['d7_image_styles']['process']['effects']);
+    $process['image_effects_transform_effects'] = ['plugin' => 'image_effects_transform_effects'];
+    $migrations['d7_image_styles']['process']['effects'] = $process;
+  }
+}
+
+/**
+ * Ensures that a plugin process mapping is an associative array.
+ *
+ * @param array|string $plugin_process
+ *   The plugin process mapping.
+ *
+ * @return array
+ *   The plugin process mapping as an associative array.
+ */
+function _image_effects_make_associative($plugin_process) {
+  if (!is_array($plugin_process)) {
+    $plugin_process = [
+      [
+        'plugin' => 'get',
+        'source' => $plugin_process,
+      ],
+    ];
+  }
+  elseif (array_key_exists('plugin', $plugin_process)) {
+    $plugin_process = [$plugin_process];
+  }
+
+  return $plugin_process;
+}
